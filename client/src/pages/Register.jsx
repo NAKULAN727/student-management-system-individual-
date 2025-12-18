@@ -1,7 +1,6 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import AuthContext from "../context/AuthContext";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -11,6 +10,7 @@ import {
   FaChalkboardTeacher,
 } from "react-icons/fa";
 import axios from "axios";
+import bgAuth from "../assets/bg_auth_school.png";
 
 const roles = [
   { name: "Student", icon: <FaUserGraduate />, color: "bg-blue-500" },
@@ -71,31 +71,46 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 relative">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-gray-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+      <div className="absolute top-0 left-0 -ml-20 -mt-20 w-96 h-96 bg-slate-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-32 right-20 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+
       <Link
         to="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium"
+        className="absolute top-6 left-6 flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium z-10"
       >
         <FaArrowLeft /> Back to Home
       </Link>
       <ToastContainer />
-      <div className="bg-white rounded-2xl shadow-2xl flex w-full max-w-4xl overflow-hidden min-h-[600px]">
+      <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl flex w-full max-w-4xl overflow-hidden min-h-[600px] relative z-10">
         {/* Left Side: Role Selection & Visuals */}
-        <div className="hidden md:flex flex-col w-1/2 bg-gradient-to-br from-primary to-blue-800 p-10 text-white justify-between relative">
-          <div className="z-10">
+        <div className="hidden md:flex flex-col w-1/2 p-10 text-white justify-between relative overflow-hidden">
+          {/* Background Image & Overlay */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src={bgAuth}
+              alt="School Hallway"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-blue-900/60 backdrop-blur-[2px]"></div>
+          </div>
+
+          <div className="relative z-10">
             <h2 className="text-4xl font-bold mb-6">Join Eluria</h2>
             <p className="text-blue-100">Create an account to get started.</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 z-10">
+          <div className="grid grid-cols-1 gap-4 relative z-10">
             {roles.map((role) => (
               <div
                 key={role.name}
                 onClick={() => setSelectedRole(role.name)}
-                className={`p-4 rounded-xl cursor-pointer transition-all border-2 flex items-center gap-4 ${
+                className={`p-4 rounded-xl cursor-pointer transition-all border-2 flex items-center gap-4 backdrop-blur-md ${
                   selectedRole === role.name
-                    ? "bg-white text-primary border-white"
-                    : "bg-transparent border-blue-400/30 hover:bg-blue-700/50"
+                    ? "bg-white/10 border-white text-white"
+                    : "bg-transparent border-white/20 hover:bg-white/5 text-gray-200"
                 }`}
               >
                 <div className="text-2xl">{role.icon}</div>
@@ -104,10 +119,8 @@ const Register = () => {
             ))}
           </div>
 
-          {/* Decor */}
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
+          <div className="relative z-10 text-xs text-blue-200/60 mt-8">
+            Eluria School Management System &copy; 2025
           </div>
         </div>
 

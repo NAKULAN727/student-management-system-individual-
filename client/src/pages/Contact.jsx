@@ -12,6 +12,9 @@ import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 
+import contactHeader from "../assets/contact_header.png";
+// Banner image import
+
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -48,18 +51,39 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-white font-sans relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-slate-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+      <div className="absolute bottom-0 left-0 -ml-20 -mt-20 w-96 h-96 bg-gray-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+
       <ToastContainer position="top-right" />
 
       <Navbar />
 
-      {/* Header */}
-      <section className="text-center py-10 px-6">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">Get in Touch</h1>
-        <p className="text-gray-500 max-w-xl mx-auto">
-          We would love to hear from you! Whether you have questions, feedback,
-          or inquiries, feel free to reach out.
-        </p>
+      {/* Hero / Header */}
+      <section className="relative z-10 max-w-6xl mx-auto mt-6 px-6">
+        <div className="relative rounded-3xl overflow-hidden h-64 shadow-2xl mb-12">
+          <img
+            src={contactHeader}
+            alt="Contact Us"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-transparent flex flex-col justify-center px-12">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                Get in Touch
+              </h1>
+              <p className="text-blue-100 max-w-lg text-lg">
+                We would love to hear from you! Whether you have questions,
+                feedback, or inquiries, feel free to reach out.
+              </p>
+            </motion.div>
+          </div>
+        </div>
       </section>
 
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 px-6 pb-20">
@@ -69,13 +93,13 @@ const Contact = () => {
             icon={<FaEnvelope />}
             title="Email Us"
             content="eluria@edu.com"
-            color="bg-blue-100 text-blue-600"
+            color="bg-blue-50 text-blue-800"
           />
           <ContactInfoCard
             icon={<FaPhoneAlt />}
             title="Call Us"
             content="+144 199 244"
-            color="bg-green-100 text-green-600"
+            color="bg-slate-50 text-slate-800"
           />
           <ContactInfoCard
             icon={<FaMapMarkerAlt />}
@@ -89,7 +113,7 @@ const Contact = () => {
                 Future City, Education District
               </>
             }
-            color="bg-purple-100 text-purple-600"
+            color="bg-indigo-50 text-indigo-800"
           />
 
           <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">

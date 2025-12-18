@@ -1,4 +1,5 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -8,8 +9,6 @@ import {
   FaUser,
   FaChartLine,
   FaCalendarAlt,
-  FaMoneyBillWave,
-  FaComments,
   FaBell,
   FaSignOutAlt,
   FaChild,
@@ -20,6 +19,9 @@ import {
 const ParentDashboard = () => {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [announcements, setAnnouncements] = useState([]);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [academicReportData, setAcademicReportData] = useState([]);
 
   const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -29,13 +31,61 @@ const ParentDashboard = () => {
     navigate("/login");
   };
 
+  useEffect(() => {
+    if (activeTab === "Notifications" && user) {
+      const fetchAnnouncements = async () => {
+        try {
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          const response = await axios.get(
+            `http://localhost:5000/api/parent/announcements`,
+            config
+          );
+          setAnnouncements(response.data);
+        } catch (error) {
+          console.error("Failed to fetch announcements", error);
+        }
+      };
+      fetchAnnouncements();
+    }
+
+    if (activeTab === "Attendance" && user) {
+      const fetchAttendance = async () => {
+        try {
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          const response = await axios.get(
+            `http://localhost:5000/api/parent/attendance`,
+            config
+          );
+          setAttendanceData(response.data);
+        } catch (error) {
+          console.error("Failed to fetch attendance", error);
+        }
+      };
+      fetchAttendance();
+    }
+
+    if (activeTab === "Academic Report" && user) {
+      const fetchMarks = async () => {
+        try {
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          const response = await axios.get(
+            `http://localhost:5000/api/parent/marks`,
+            config
+          );
+          setAcademicReportData(response.data);
+        } catch (error) {
+          console.error("Failed to fetch marks", error);
+        }
+      };
+      fetchMarks();
+    }
+  }, [activeTab, user]);
+
   const menuItems = [
     { name: "Dashboard", icon: <FaHome /> },
     { name: "Child Profile", icon: <FaUser /> },
     { name: "Academic Report", icon: <FaChartLine /> },
     { name: "Attendance", icon: <FaCalendarAlt /> },
-    { name: "Fee Payment", icon: <FaMoneyBillWave /> },
-    { name: "Teacher Feedback", icon: <FaComments /> },
     { name: "Notifications", icon: <FaBell /> },
   ];
 
@@ -156,10 +206,10 @@ const ParentDashboard = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <KPICard
-                    title="Fees Due"
-                    value="$500"
-                    sub="Due by 30th Dec"
-                    icon={<FaMoneyBillWave />}
+                    title="Notices"
+                    value={announcements.length || "0"}
+                    sub="New announcements"
+                    icon={<FaBell />}
                     color="bg-red-100 text-red-600"
                   />
                   <KPICard
@@ -313,6 +363,173 @@ const ParentDashboard = () => {
                       Please contact the school administration to link your
                       child's profile.
                     </p>
+                  </div>
+                )}
+              </div>
+            ) : activeTab === "Notifications" ? (
+              <div className="space-y-6">
+                {announcements.length > 0 ? (
+                  announcements.map((announcement) => (
+                    <div
+                      key={announcement._id}
+                      className="bg-orange-50 border border-orange-100 p-6 rounded-2xl relative"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-bold text-gray-800">
+                          {announcement.title}
+                        </h4>
+                        <span className="text-xs text-orange-500 font-medium bg-white px-2 py-1 rounded-md shadow-sm">
+                          {new Date(
+                            announcement.createdAt
+                          ).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-gray-600 leading-relaxed text-sm">
+                        {announcement.content}
+                      </p>
+                      <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
+                        <span className="font-semibold text-gray-500">
+                          Posted by:
+                        </span>{" "}
+                        {announcement.postedBy?.name || "Teacher"}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-gray-400">
+                    <FaBell className="text-4xl mx-auto mb-3 opacity-20" />
+                    <p>No new notifications at the moment.</p>
+                  </div>
+                )}
+              </div>
+            ) : activeTab === "Attendance" ? (
+              <div className="overflow-hidden">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-800">
+                    Attendance History
+                  </h3>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                      <span className="text-sm font-medium text-gray-600">
+                        Present
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                      <span className="text-sm font-medium text-gray-600">
+                        Absent
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                  <table className="w-full text-left text-sm text-gray-600">
+                    <thead className="bg-gray-50 text-gray-700 uppercase font-bold text-xs">
+                      <tr>
+                        <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {attendanceData.length > 0 ? (
+                        attendanceData.map((record) => (
+                          <tr
+                            key={record._id}
+                            className="hover:bg-gray-50/50 transition-colors"
+                          >
+                            <td className="px-6 py-4 font-bold text-gray-800">
+                              {new Date(record.date).toLocaleDateString(
+                                undefined,
+                                {
+                                  weekday: "short",
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                  record.status === "Present"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
+                              >
+                                {record.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-gray-500 italic">
+                              {record.remarks || "-"}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan="3"
+                            className="text-center py-8 text-gray-400"
+                          >
+                            No attendance records found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : activeTab === "Academic Report" ? (
+              <div className="space-y-8">
+                {academicReportData.length > 0 ? (
+                  academicReportData.map((exam) => (
+                    <div
+                      key={exam._id}
+                      className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm"
+                    >
+                      <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                        <h4 className="text-lg font-bold text-gray-800">
+                          {exam.examType}
+                        </h4>
+                        <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
+                          {new Date(exam.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {exam.subjects.map((subject, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-shadow"
+                            >
+                              <div>
+                                <h5 className="font-bold text-gray-700">
+                                  {subject.name}
+                                </h5>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {subject.remarks || "No remarks"}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-2xl font-bold text-blue-600">
+                                  {subject.score}
+                                </span>
+                                <span className="text-xs text-gray-400 block">
+                                  / {subject.total}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-gray-400">
+                    <FaChartLine className="text-4xl mx-auto mb-3 opacity-20" />
+                    <p>No academic reports found.</p>
                   </div>
                 )}
               </div>

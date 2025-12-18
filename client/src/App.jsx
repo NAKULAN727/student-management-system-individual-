@@ -12,6 +12,8 @@ import Register from "./pages/Register";
 import AdminLogin from "./pages/AdminLogin";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import ParentDashboard from "./pages/dashboards/ParentDashboard";
@@ -29,6 +31,11 @@ function App() {
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route
+            path="/terms-and-conditions"
+            element={<TermsAndConditions />}
+          />
 
           <Route
             path="/student/dashboard"

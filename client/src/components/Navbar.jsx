@@ -18,7 +18,7 @@ const Navbar = () => {
   return (
     <nav className="flex justify-between items-center p-6 shadow-sm bg-white sticky top-0 z-50">
       <Link to="/" className="flex items-center gap-2 z-50 relative">
-        <FaGraduationCap className="text-4xl text-blue-600" />
+        <FaGraduationCap className="text-4xl text-blue-900" />
         <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
           Eluria School
         </h1>
@@ -30,8 +30,8 @@ const Navbar = () => {
           <Link
             key={link.path}
             to={link.path}
-            className={`font-medium transition-colors hover:text-blue-600 ${
-              isActive(link.path) ? "text-blue-600" : "text-gray-600"
+            className={`font-medium transition-colors hover:text-blue-800 ${
+              isActive(link.path) ? "text-blue-900" : "text-gray-600"
             }`}
           >
             {link.name}
@@ -39,7 +39,7 @@ const Navbar = () => {
         ))}
         <Link
           to="/login"
-          className="px-6 py-2 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200"
+          className="px-6 py-2 rounded-full bg-blue-900 text-white font-semibold hover:bg-blue-800 transition-all shadow-lg hover:shadow-blue-200"
         >
           Login
         </Link>
@@ -68,7 +68,7 @@ const Navbar = () => {
                 to={link.path}
                 onClick={() => setIsOpen(false)}
                 className={`text-2xl font-bold ${
-                  isActive(link.path) ? "text-blue-600" : "text-gray-800"
+                  isActive(link.path) ? "text-blue-900" : "text-gray-800"
                 }`}
               >
                 {link.name}
@@ -77,7 +77,7 @@ const Navbar = () => {
             <Link
               to="/login"
               onClick={() => setIsOpen(false)}
-              className="px-8 py-3 rounded-full bg-blue-600 text-white font-bold text-xl shadow-lg"
+              className="px-8 py-3 rounded-full bg-blue-900 text-white font-bold text-xl shadow-lg"
             >
               Login
             </Link>
