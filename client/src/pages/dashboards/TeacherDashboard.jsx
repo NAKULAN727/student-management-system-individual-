@@ -12,6 +12,7 @@ import {
   FaSignOutAlt,
   FaSchool,
   FaBars,
+  FaGraduationCap,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -251,7 +252,7 @@ const TeacherDashboard = () => {
         {/* Logo Section */}
         <div className="p-8 border-b border-gray-100 flex items-center gap-4">
           <div className="bg-purple-600 w-10 h-10 rounded-xl shadow-lg flex items-center justify-center transform rotate-3 hover:rotate-0 transition-all duration-300">
-            <span className="text-xl text-white font-bold">E</span>
+            <FaGraduationCap className="text-2xl text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-800 tracking-tight">

@@ -28,7 +28,8 @@ const deleteUser = async (req, res) => {
 // @route   POST /api/admin/users
 // @access  Private/Admin
 const createUser = async (req, res) => {
-  const { name, email, password, role, classId } = req.body;
+  const { name, email, password, role, classId, linkedStudentAdmissionNumber } =
+    req.body;
 
   const userExists = await User.findOne({ email });
 
@@ -44,8 +45,31 @@ const createUser = async (req, res) => {
     role,
   };
 
-  if (role === "Student" && classId) {
-    userData.studentDetails = { classId };
+  // If creating a Parent, link them to the student
+  if (role === "Parent" && linkedStudentAdmissionNumber) {
+    const student = await User.findOne({
+      "studentDetails.admissionNumber": linkedStudentAdmissionNumber,
+      role: "Student",
+    });
+
+    if (!student) {
+      res.status(404);
+      throw new Error("Invalid Admission Number");
+    }
+
+    userData.parentDetails = {
+      children: [student._id],
+      linkedStudentId: student._id,
+    };
+  }
+
+  if (role === "Student") {
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const admissionNumber = `ELU-STU-${randomNum}`;
+    userData.studentDetails = {
+      classId: classId || undefined,
+      admissionNumber,
+    };
   }
 
   const user = await User.create(userData);
@@ -58,6 +82,17 @@ const createUser = async (req, res) => {
       role: user.role,
       studentDetails: user.studentDetails,
     });
+
+    // If Parent was created and linked, update the Student's record too
+    if (
+      role === "Parent" &&
+      userData.parentDetails &&
+      userData.parentDetails.linkedStudentId
+    ) {
+      await User.findByIdAndUpdate(userData.parentDetails.linkedStudentId, {
+        $set: { "studentDetails.parentId": user._id },
+      });
+    }
   } else {
     res.status(400);
     throw new Error("Invalid user data");
@@ -208,6 +243,52 @@ const assignClassToTeacher = async (req, res) => {
 
 const Subject = require("../models/Subject");
 const Announcement = require("../models/Announcement");
+const PasswordResetRequest = require("../models/PasswordResetRequest");
+
+// @desc    Get all password reset requests
+// @route   GET /api/admin/requests
+// @access  Private/Admin
+const getPasswordResetRequests = async (req, res) => {
+  try {
+    const requests = await PasswordResetRequest.find({
+      status: "Pending",
+    }).sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve password reset request
+// @route   PUT /api/admin/requests/:id/resolve
+// @access  Private/Admin
+const resolvePasswordResetRequest = async (req, res) => {
+  try {
+    const request = await PasswordResetRequest.findById(req.params.id);
+    if (!request) {
+      res.status(404);
+      throw new Error("Request not found");
+    }
+
+    if (request.status === "Resolved") {
+      res.status(400);
+      throw new Error("Request already resolved");
+    }
+
+    const user = await User.findById(request.user);
+    if (user) {
+      user.password = "123456"; // Default reset
+      await user.save();
+    }
+
+    request.status = "Resolved";
+    await request.save();
+
+    res.json({ message: "Password reset to '123456' and request resolved." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // ... existing code ...
 
@@ -363,5 +444,8 @@ module.exports = {
   getAnnouncements,
   createAnnouncement,
   deleteAnnouncement,
+  deleteAnnouncement,
   addSubjectToClass,
+  getPasswordResetRequests,
+  resolvePasswordResetRequest,
 };

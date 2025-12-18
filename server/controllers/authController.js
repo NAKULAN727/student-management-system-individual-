@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const PasswordResetRequest = require("../models/PasswordResetRequest");
 const jwt = require("jsonwebtoken");
 
 const generateToken = (id) => {
@@ -13,7 +14,9 @@ const generateToken = (id) => {
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email })
+    .populate("parentDetails.linkedStudentId")
+    .populate("parentDetails.children");
 
   if (user && (await user.matchPassword(password))) {
     res.json({
@@ -22,6 +25,7 @@ const loginUser = async (req, res) => {
       email: user.email,
       role: user.role,
       token: generateToken(user._id),
+      parentDetails: user.parentDetails, // Return populated details
     });
   } else {
     res.status(401);
@@ -77,13 +81,14 @@ const registerUser = async (req, res) => {
 
       if (!student) {
         res.status(404);
-        throw new Error("Invalid Student Admission Number");
+        throw new Error("Invalid Admission Number");
       }
 
       childrenIds.push(student._id);
       userDetails = {
         parentDetails: {
           children: childrenIds,
+          linkedStudentId: student._id,
         },
       };
     }
@@ -125,12 +130,15 @@ const registerUser = async (req, res) => {
 };
 
 const getUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id).populate({
-    path: "teacherDetails.assignedClasses",
-    populate: {
-      path: "subjects.subject",
-    },
-  });
+  const user = await User.findById(req.user._id)
+    .populate({
+      path: "teacherDetails.assignedClasses",
+      populate: {
+        path: "subjects.subject",
+      },
+    })
+    .populate("parentDetails.linkedStudentId")
+    .populate("parentDetails.children");
 
   if (user) {
     res.json({
@@ -139,6 +147,7 @@ const getUserProfile = async (req, res) => {
       email: user.email,
       role: user.role,
       teacherDetails: user.teacherDetails,
+      parentDetails: user.parentDetails,
     });
   } else {
     res.status(404);
@@ -146,4 +155,42 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { loginUser, registerUser, getUserProfile };
+// @desc    Request Password Reset
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User with this email not found");
+    }
+
+    // Check if pending request exists
+    const existingRequest = await PasswordResetRequest.findOne({
+      user: user._id,
+      status: "Pending",
+    });
+
+    if (existingRequest) {
+      res.status(400);
+      throw new Error("A reset request is already pending.");
+    }
+
+    await PasswordResetRequest.create({
+      user: user._id,
+      email: user.email,
+      role: user.role,
+    });
+
+    res.status(200).json({ message: "Password reset request sent to Admin." });
+  } catch (error) {
+    res.status(res.statusCode || 500);
+    throw new Error(error.message);
+  }
+};
+
+module.exports = { loginUser, registerUser, getUserProfile, forgotPassword };

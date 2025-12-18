@@ -15,6 +15,10 @@ import {
   FaUserPlus,
   FaUserTie,
   FaBars,
+  FaUserShield,
+  FaCalendarAlt,
+  FaGraduationCap,
+  FaKey,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -34,6 +38,7 @@ const AdminDashboard = () => {
     password: "",
     role: "Student",
     classId: "",
+    linkedStudentAdmissionNumber: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -55,6 +60,7 @@ const AdminDashboard = () => {
   const [showCreateSubjectModal, setShowCreateSubjectModal] = useState(false);
   const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] =
     useState(false);
+  const [requests, setRequests] = useState([]); // Requests State
   const [newSubject, setNewSubject] = useState({
     name: "",
     code: "",
@@ -69,17 +75,39 @@ const AdminDashboard = () => {
   useEffect(() => {
     // Determine when to fetch data based on active tab
     // We need Users (Teachers) and Subjects available in Classes tab for the Manage Subjects modal
-    if (["Dashboard", "Students", "Teachers", "Classes"].includes(activeTab)) {
+    if (
+      [
+        "Dashboard",
+        "Students",
+        "Teachers",
+        "Parents",
+        "Admins",
+        "Classes",
+        "Timetable",
+      ].includes(activeTab)
+    ) {
       fetchUsers();
     }
-    if (["Dashboard", "Classes", "Teachers", "Students"].includes(activeTab)) {
+    if (
+      [
+        "Dashboard",
+        "Classes",
+        "Teachers",
+        "Students",
+        "Parents",
+        "Timetable",
+      ].includes(activeTab)
+    ) {
       fetchClasses();
     }
-    if (["Dashboard", "Subjects", "Classes"].includes(activeTab)) {
+    if (["Dashboard", "Subjects", "Classes", "Timetable"].includes(activeTab)) {
       fetchSubjects();
     }
     if (["Dashboard", "Announcements"].includes(activeTab)) {
       fetchAnnouncements();
+    }
+    if (activeTab === "Requests") {
+      fetchRequests();
     }
     // eslint-disable-next-line
   }, [activeTab]);
@@ -141,6 +169,35 @@ const AdminDashboard = () => {
       } catch (error) {
         toast.error("Failed to delete subject");
       }
+    }
+  };
+
+  const fetchRequests = async () => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.get(
+        "http://localhost:5000/api/admin/requests",
+        config
+      );
+      setRequests(data);
+    } catch (error) {
+      console.error("Failed requests fetch", error);
+    }
+  };
+
+  const handleResolveRequest = async (id) => {
+    if (!window.confirm("Reset password to '123456'?")) return;
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      await axios.put(
+        `http://localhost:5000/api/admin/requests/${id}/resolve`,
+        {},
+        config
+      );
+      toast.success("Request resolved and password reset.");
+      fetchRequests();
+    } catch (error) {
+      toast.error("Failed: " + (error.response?.data?.message || "Unknown"));
     }
   };
 
@@ -419,9 +476,13 @@ const AdminDashboard = () => {
     { name: "Dashboard", icon: <FaHome /> },
     { name: "Students", icon: <FaUserGraduate /> },
     { name: "Teachers", icon: <FaChalkboardTeacher /> },
+    { name: "Parents", icon: <FaUserTie /> },
+    { name: "Admins", icon: <FaUserShield /> },
     { name: "Classes", icon: <FaSchool /> },
     { name: "Subjects", icon: <FaBook /> },
+    { name: "Timetable", icon: <FaCalendarAlt /> },
     { name: "Announcements", icon: <FaBullhorn /> },
+    { name: "Requests", icon: <FaKey /> },
   ];
 
   // Helper to filter users
@@ -444,16 +505,16 @@ const AdminDashboard = () => {
         color="bg-green-100 text-green-600"
       />
       <StatCard
+        title="Total Parents"
+        value={getFilteredUsers("Parent").length}
+        icon={<FaUserTie />}
+        color="bg-purple-100 text-purple-600"
+      />
+      <StatCard
         title="Classes"
         value="12"
         icon={<FaSchool />}
         color="bg-orange-100 text-orange-600"
-      />
-      <StatCard
-        title="Subjects"
-        value="8"
-        icon={<FaBook />}
-        color="bg-purple-100 text-purple-600"
       />
     </div>
   );
@@ -469,6 +530,10 @@ const AdminDashboard = () => {
                 ? "Student"
                 : role === "Teacher"
                 ? "Teacher"
+                : role === "Parent"
+                ? "Parent"
+                : role === "Admin"
+                ? "Admin"
                 : "Student"
             )
           }
@@ -645,6 +710,239 @@ const AdminDashboard = () => {
     </div>
   );
 
+  const TimetableManager = () => {
+    const [selectedClassId, setSelectedClassId] = useState("");
+    const [schedule, setSchedule] = useState({
+      Monday: [],
+      Tuesday: [],
+      Wednesday: [],
+      Thursday: [],
+      Friday: [],
+    });
+
+    const periods = [1, 2, 3, 4, 5, 6, 7, 8];
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+    useEffect(() => {
+      if (selectedClassId) {
+        fetchTimetable(selectedClassId);
+      } else {
+        // Reset schedule if no class selected
+        setSchedule({
+          Monday: [],
+          Tuesday: [],
+          Wednesday: [],
+          Thursday: [],
+          Friday: [],
+        });
+      }
+      // eslint-disable-next-line
+    }, [selectedClassId]);
+
+    const fetchTimetable = async (classId) => {
+      try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const response = await axios.get(
+          `http://localhost:5000/api/timetable/${classId}`,
+          config
+        );
+        if (response.data && response.data.schedule) {
+          setSchedule(response.data.schedule);
+        } else {
+          // If exists but empty schedule
+          setSchedule({
+            Monday: [],
+            Tuesday: [],
+            Wednesday: [],
+            Thursday: [],
+            Friday: [],
+          });
+        }
+      } catch (error) {
+        // Not found is fine, just clear schedule (new timetable)
+        setSchedule({
+          Monday: [],
+          Tuesday: [],
+          Wednesday: [],
+          Thursday: [],
+          Friday: [],
+        });
+      }
+    };
+
+    const handleCellChange = (day, period, field, value) => {
+      setSchedule((prev) => {
+        const daySchedule = prev[day] ? [...prev[day]] : [];
+        const existingSlotIndex = daySchedule.findIndex(
+          (s) => s.period === period
+        );
+
+        if (existingSlotIndex >= 0) {
+          // Update existing
+          daySchedule[existingSlotIndex] = {
+            ...daySchedule[existingSlotIndex],
+            [field]: value,
+          };
+        } else {
+          // Add new
+          const newSlot = {
+            period,
+            subject: "",
+            startTime: "09:00",
+            endTime: "10:00",
+            [field]: value,
+          };
+          daySchedule.push(newSlot);
+        }
+        return { ...prev, [day]: daySchedule };
+      });
+    };
+
+    const getSlotValue = (day, period, field) => {
+      const slot = schedule[day]?.find((s) => s.period === period);
+      return slot ? slot[field] : "";
+    };
+
+    const saveTimetable = async () => {
+      if (!selectedClassId) return toast.error("Please select a class");
+      try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        await axios.post(
+          "http://localhost:5000/api/timetable",
+          { classId: selectedClassId, schedule },
+          config
+        );
+        toast.success("Timetable saved successfully!");
+      } catch (error) {
+        toast.error("Failed to save timetable");
+      }
+    };
+
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold text-gray-800">
+            Manage Class Timetable
+          </h3>
+          <div className="flex gap-4">
+            <select
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+            >
+              <option value="">Select Class</option>
+              {classes.map((cls) => (
+                <option key={cls._id} value={cls._id}>
+                  {cls.name} - {cls.section}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={saveTimetable}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold shadow-sm transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+        {selectedClassId ? (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="p-3 border border-gray-200 bg-gray-50 text-left min-w-[100px]">
+                    Day / Period
+                  </th>
+                  {periods.map((p) => (
+                    <th
+                      key={p}
+                      className="p-3 border border-gray-200 bg-gray-50 text-center min-w-[150px]"
+                    >
+                      Period {p}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {days.map((day) => (
+                  <tr key={day}>
+                    <td className="p-3 border border-gray-200 font-bold text-gray-700 bg-gray-50">
+                      {day}
+                    </td>
+                    {periods.map((period) => (
+                      <td key={period} className="p-2 border border-gray-200">
+                        <div className="flex flex-col gap-1">
+                          <select
+                            className="w-full text-sm p-1 border rounded bg-white"
+                            value={getSlotValue(day, period, "subject")}
+                            onChange={(e) =>
+                              handleCellChange(
+                                day,
+                                period,
+                                "subject",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <option value="">Subject...</option>
+                            {subjects.map((sub) => (
+                              <option key={sub._id} value={sub.name}>
+                                {sub.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="flex gap-1">
+                            <input
+                              type="time"
+                              className="w-1/2 text-xs p-1 border rounded"
+                              value={
+                                getSlotValue(day, period, "startTime") ||
+                                "09:00"
+                              }
+                              onChange={(e) =>
+                                handleCellChange(
+                                  day,
+                                  period,
+                                  "startTime",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <input
+                              type="time"
+                              className="w-1/2 text-xs p-1 border rounded"
+                              value={
+                                getSlotValue(day, period, "endTime") || "10:00"
+                              }
+                              onChange={(e) =>
+                                handleCellChange(
+                                  day,
+                                  period,
+                                  "endTime",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+            <FaCalendarAlt className="text-4xl mx-auto mb-3 opacity-20" />
+            <p>Select a class to manage its timetable</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const AnnouncementsTable = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div className="md:col-span-full flex justify-between items-center mb-4">
@@ -726,11 +1024,11 @@ const AdminDashboard = () => {
         {/* Logo Section */}
         <div className="p-6 border-b border-gray-100 flex items-center gap-3">
           <div className="bg-blue-600 w-10 h-10 rounded-xl shadow-md flex items-center justify-center">
-            <span className="text-xl text-white font-bold">H</span>
+            <FaGraduationCap className="text-2xl text-white" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-800 tracking-tight">
-              Horizon School
+              Eluria School
             </h1>
             <p className="text-xs text-gray-500 font-medium">Admin Portal</p>
           </div>
@@ -800,7 +1098,7 @@ const AdminDashboard = () => {
           >
             <FaBars className="text-2xl" />
           </button>
-          <span className="font-bold text-gray-700">Horizon Admin</span>
+          <span className="font-bold text-gray-700">Eluria Admin</span>
           <div className="w-8"></div> {/* Spacer to center title roughly */}
         </div>
 
@@ -824,9 +1122,70 @@ const AdminDashboard = () => {
           {activeTab === "Teachers" && (
             <UsersTable role="Teacher" data={getFilteredUsers("Teacher")} />
           )}
+          {activeTab === "Parents" && (
+            <UsersTable role="Parent" data={getFilteredUsers("Parent")} />
+          )}
+          {activeTab === "Admins" && (
+            <UsersTable role="Admin" data={getFilteredUsers("Admin")} />
+          )}
           {activeTab === "Classes" && <ClassesTable />}
           {activeTab === "Subjects" && <SubjectsTable />}
+          {activeTab === "Timetable" && <TimetableManager />}
           {activeTab === "Announcements" && <AnnouncementsTable />}
+          {activeTab === "Requests" && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                Password Reset Requests
+              </h3>
+              {requests.length === 0 ? (
+                <p className="text-gray-400">No pending requests.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="pb-3 text-sm font-bold text-gray-500">
+                          Email
+                        </th>
+                        <th className="pb-3 text-sm font-bold text-gray-500">
+                          Role
+                        </th>
+                        <th className="pb-3 text-sm font-bold text-gray-500">
+                          Date
+                        </th>
+                        <th className="pb-3 text-sm font-bold text-gray-500">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {requests.map((req) => (
+                        <tr key={req._id} className="hover:bg-gray-50">
+                          <td className="py-3 text-sm font-bold text-gray-800">
+                            {req.email}
+                          </td>
+                          <td className="py-3 text-xs text-gray-500 uppercase font-bold">
+                            {req.role}
+                          </td>
+                          <td className="py-3 text-sm text-gray-500">
+                            {new Date(req.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="py-3">
+                            <button
+                              onClick={() => handleResolveRequest(req._id)}
+                              className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold hover:bg-green-200 transition-colors"
+                            >
+                              Reset & Resolve
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
       </main>
 
@@ -940,6 +1299,30 @@ const AdminDashboard = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+                )}
+
+                {newUser.role === "Parent" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Student Admission Number
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      placeholder="ELU-STU-XXXX"
+                      value={newUser.linkedStudentAdmissionNumber}
+                      onChange={(e) =>
+                        setNewUser({
+                          ...newUser,
+                          linkedStudentAdmissionNumber: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Start typing the admission number to link a child.
+                    </p>
                   </div>
                 )}
 

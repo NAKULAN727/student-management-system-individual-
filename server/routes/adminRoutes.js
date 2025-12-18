@@ -17,6 +17,8 @@ const {
   createAnnouncement,
   deleteAnnouncement,
   addSubjectToClass,
+  getPasswordResetRequests,
+  resolvePasswordResetRequest,
 } = require("../controllers/adminController");
 
 router
@@ -64,5 +66,13 @@ router
 router
   .route("/announcements/:id")
   .delete(protect, authorize("Admin"), deleteAnnouncement);
+
+router
+  .route("/requests")
+  .get(protect, authorize("Admin"), getPasswordResetRequests);
+
+router
+  .route("/requests/:id/resolve")
+  .put(protect, authorize("Admin"), resolvePasswordResetRequest);
 
 module.exports = router;

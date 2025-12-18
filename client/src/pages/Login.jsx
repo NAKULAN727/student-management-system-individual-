@@ -11,6 +11,7 @@ import {
   FaUserShield,
   FaArrowLeft,
 } from "react-icons/fa";
+import axios from "axios";
 
 const roles = [
   { name: "Student", icon: <FaUserGraduate />, color: "bg-blue-500" },
@@ -24,6 +25,27 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+
+  const handleForgotPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setResetLoading(true);
+    try {
+      await axios.post("http://localhost:5000/api/auth/forgot-password", {
+        email: resetEmail,
+      });
+      toast.success("Password reset request sent to Admin.");
+      setShowForgotModal(false);
+      setResetEmail("");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send request");
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -152,17 +174,82 @@ const Login = () => {
               </button>
 
               <div className="text-center mt-4 space-y-2">
-                <a
-                  href="#"
-                  className="text-sm text-primary hover:underline block"
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="text-sm text-primary hover:underline block mx-auto"
                 >
                   Forgot password?
-                </a>
+                </button>
               </div>
             </form>
           </motion.div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <AnimatePresence>
+        {showForgotModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-8 relative"
+            >
+              <button
+                onClick={() => setShowForgotModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold"
+              >
+                &times;
+              </button>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                Reset Password
+              </h3>
+              <p className="text-gray-500 mb-6">
+                Enter your email address to request a password reset from the
+                admin.
+              </p>
+              <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
+                    placeholder="name@eluria.edu"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:opacity-70"
+                  >
+                    {resetLoading ? "Sending..." : "Send Request"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

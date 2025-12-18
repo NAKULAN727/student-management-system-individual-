@@ -20,6 +20,7 @@ const userSchema = mongoose.Schema(
     },
     parentDetails: {
       children: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      linkedStudentId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     },
     teacherDetails: {
       subjects: [{ type: String }],

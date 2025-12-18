@@ -13,6 +13,7 @@ import {
   FaBullhorn,
   FaSignOutAlt,
   FaBars,
+  FaGraduationCap,
 } from "react-icons/fa";
 import axios from "axios";
 
@@ -87,8 +88,7 @@ const StudentDashboard = () => {
     { name: "Report Card", icon: <FaClipboardList /> },
     { name: "Time Table", icon: <FaClock /> },
     { name: "Homework", icon: <FaBookOpen /> },
-    { name: "Fee Status", icon: <FaCreditCard /> },
-    { name: "Library", icon: <FaBookReader /> },
+
     { name: "Notices", icon: <FaBullhorn /> },
   ];
 
@@ -111,7 +111,7 @@ const StudentDashboard = () => {
         {/* Logo Section */}
         <div className="p-6 border-b border-gray-100 flex items-center gap-3">
           <div className="bg-primary p-2 rounded-lg shadow-lg">
-            <span className="text-xl text-white font-bold">ES</span>
+            <FaGraduationCap className="text-2xl text-white" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-800 tracking-tight">
@@ -374,7 +374,7 @@ const StudentDashboard = () => {
                             <th className="px-6 py-4 border-b border-gray-200 sticky left-0 bg-gray-50 z-10 w-24">
                               Day
                             </th>
-                            {Array.from({ length: 8 }).map((_, i) => (
+                            {Array.from({ length: 6 }).map((_, i) => (
                               <th
                                 key={i}
                                 className="px-4 py-4 text-center border-b border-gray-200 min-w-[100px]"
@@ -396,7 +396,7 @@ const StudentDashboard = () => {
                               <td className="px-6 py-4 font-bold text-gray-800 bg-white sticky left-0 border-r border-gray-100">
                                 {day}
                               </td>
-                              {Array.from({ length: 8 }).map((_, i) => {
+                              {Array.from({ length: 6 }).map((_, i) => {
                                 const period = timetable.schedule[day]?.find(
                                   (p) => p.period === i + 1
                                 );
